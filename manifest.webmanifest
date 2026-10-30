@@ -1,0 +1,17 @@
+{
+  "name": "Chess Tracker 90",
+  "short_name": "Chess90",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#101820",
+  "theme_color": "#101820",
+  "description": "Личный шахматный трекер на 90 дней",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

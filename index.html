@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101820">
+<meta name="description" content="Личный шахматный трекер на 90 дней">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>Chess Tracker 90</title>
+<style>
+:root{color-scheme:dark;--bg:#101820;--panel:#192630;--panel2:#21323e;--text:#edf4f5;--muted:#9eb0b8;--line:#30434e;--accent:#b5d7c2;--accentText:#102018;--red:#ff9b91;--gold:#f2d28b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,textarea,select{font:inherit}button{border:0;border-radius:12px;padding:11px 14px;background:var(--accent);color:var(--accentText);font-weight:700;cursor:pointer;min-height:44px}button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}button:disabled{opacity:.5;cursor:not-allowed}
+.wrap{max-width:900px;margin:auto;padding:18px 14px 40px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.brand{font-weight:900;letter-spacing:.04em;font-size:20px}.brand small{display:block;color:var(--muted);font-size:12px;font-weight:500;letter-spacing:0}
+nav{display:flex;gap:7px;overflow:auto;padding-bottom:10px;margin-bottom:12px}nav button{white-space:nowrap;background:var(--panel);color:var(--muted);border:1px solid var(--line)}nav button.active{background:var(--accent);color:var(--accentText)}
+.page{display:none}.page.active{display:block}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;min-width:0}.card h2,.card h3{margin:0 0 10px}.muted{color:var(--muted)}.big{font-size:30px;font-weight:850;letter-spacing:-.03em}.stat{font-size:13px;color:var(--muted)}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.stack{display:grid;gap:10px}.field{display:grid;gap:6px}input,textarea,select{width:100%;background:#0e171e;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:11px;min-width:0}textarea{min-height:130px;resize:vertical}.task{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}.task:last-child{border:0}.task input{width:20px;height:20px;margin-top:2px;accent-color:#b5d7c2}.task.done span{text-decoration:line-through;color:var(--muted)}.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:4px 9px;color:var(--muted);font-size:12px}.notice{padding:11px 12px;background:#263a35;border:1px solid #426454;border-radius:12px;color:#d6eee0;font-size:14px}.warn{background:#392d21;border-color:#6b5030;color:#ffe4b7}.chart{width:100%;height:170px;display:block}.moves{max-height:210px;overflow:auto;white-space:pre-wrap;background:#0e171e;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:ui-monospace,monospace}.footer{color:var(--muted);font-size:12px;margin-top:22px}.actions{display:flex;gap:8px;flex-wrap:wrap}.hidden{display:none!important}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.top{align-items:flex-start}.big{font-size:26px}.wrap{padding-top:12px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header class="top"><div class="brand">♟ CHESS TRACKER 90<small>Личный шахматный дневник · 90 дней</small></div><button class="secondary" id="installBtn" hidden>Установить</button></header>
+<nav aria-label="Разделы">
+<button class="active" data-page="home">Обзор</button><button data-page="tasks">Задачи</button><button data-page="blind">Вслепую</button><button data-page="games">Партии</button><button data-page="reports">Отчёты</button><button data-page="settings">Настройки</button>
+</nav>
+
+<section class="page active" id="home">
+<div class="notice" id="dayNotice">Твой 90-дневный шахматный цикл начинается сегодня. Маленький стабильный шаг лучше перегрузки.</div>
+<div class="grid" style="margin-top:12px">
+<div class="card"><div class="stat">Chess.com · Rapid</div><div class="big" id="rapid">—</div><div class="stat" id="rapidRecord">Загрузи статистику аккаунта</div></div>
+<div class="card"><div class="stat">Прогресс цикла</div><div class="big" id="dayCount">День 1 / 90</div><div class="stat" id="daysLeft">90 дней впереди</div></div>
+<div class="card"><div class="stat">Задачи сегодня</div><div class="big" id="taskCount">0 / 0</div><div class="stat">Отмечай выполненное в разделе «Задачи»</div></div>
+<div class="card"><div class="stat">Партий за цикл (загружено)</div><div class="big" id="gameCount">0</div><div class="stat" id="winRecord">Победы · ничьи · поражения</div></div>
+</div>
+<div class="card" style="margin-top:12px"><div class="row"><h3>История рейтинга</h3><span class="pill">Rapid · 90 дней</span></div><svg class="chart" id="ratingChart" viewBox="0 0 600 170" role="img" aria-label="График рейтинга"><text x="12" y="30" fill="#9eb0b8">Пока нет сохранённых точек рейтинга</text></svg><div class="actions"><button id="refreshStats">Обновить Chess.com</button><button class="secondary" id="saveRating">Сохранить текущий рейтинг</button></div><p class="muted" id="apiStatus" style="font-size:12px">Профиль: DIRMEN</p></div>
+</section>
+
+<section class="page" id="tasks">
+<div class="row"><div><h2>Задачи на день</h2><div class="muted" id="taskDate"></div></div><button class="secondary" id="resetTasks">Сбросить на сегодня</button></div>
+<div class="card" style="margin-top:12px"><div class="row"><strong>План на сегодня</strong><span class="pill" id="taskProgress">0%</span></div><div id="taskList" style="margin-top:8px"></div><div class="actions"><input id="newTask" placeholder="Добавить свою задачу" aria-label="Новая задача" style="flex:1"><button id="addTask">Добавить</button></div></div>
+<p class="muted" style="font-size:13px">План можно менять под нагрузку и школьное расписание. Отдых тоже часть тренировки.</p>
+</section>
+
+<section class="page" id="blind">
+<h2>Игра вслепую против Stockfish</h2>
+<div class="notice warn" style="margin-bottom:12px">Движок загружается из интернета при первом запуске. Для работы нужен интернет. Вводи SAN (например, Nf3, e4, O-O) или UCI (e2e4).</div>
+<div class="card stack">
+<div class="grid">
+<label class="field">Играть за<select id="blindColor"><option value="w">Белых</option><option value="b">Чёрных</option></select></label>
+<label class="field">Сила движка<select id="engineDepth"><option value="8">Лёгкая · глубина 8</option><option value="10" selected>Средняя · глубина 10</option><option value="12">Сложнее · глубина 12</option></select></label>
+</div>
+<div class="row"><span class="pill" id="turnLabel">Твой ход: белые</span><span class="pill" id="engineState">Stockfish не загружен</span></div>
+<label class="field">Твой ход (SAN / UCI)<input id="blindMove" placeholder="Например: e4" autocomplete="off"></label>
+<div class="actions"><button id="sendMove">Сделать ход</button><button class="secondary" id="newBlind">Новая партия</button><button class="secondary" id="showFen">Показать FEN</button></div>
+<div class="moves" id="blindMoves" aria-live="polite">Партия ещё не началась.</div>
+<div class="row"><span class="muted" id="blindMessage">Доска скрыта — представляй позицию мысленно.</span><button class="secondary" id="revealBoard">Показать доску на 5 секунд</button></div>
+<div id="boardReveal" class="hidden" style="font-size:24px;line-height:1.45;letter-spacing:5px;text-align:center;background:#0e171e;padding:12px;border-radius:12px"></div>
+</div>
+</section>
+
+<section class="page" id="games">
+<h2>Импорт и разбор партий</h2>
+<div class="card stack">
+<p class="muted" style="margin:0">Вставь PGN из Chess.com или загрузи .pgn. Приложение проверит запись ходов, покажет нотацию и попросит Stockfish найти сильное продолжение в текущей позиции.</p>
+<label class="field">PGN партии<textarea id="pgnInput" placeholder='[Event "Live Chess"]&#10;1. e4 e5 2. Nf3 Nc6 ...'></textarea></label>
+<div class="actions"><button id="loadPgn">Загрузить партию</button><label class="secondary" style="padding:10px 14px;border-radius:12px;cursor:pointer">Выбрать .pgn<input id="pgnFile" type="file" accept=".pgn,text/plain" hidden></label><button class="secondary" id="clearPgn">Очистить</button></div>
+<div id="pgnStatus" class="muted" aria-live="polite">Партия ещё не загружена.</div>
+<div id="pgnMoves" class="moves hidden"></div>
+<div class="actions"><button id="analyzePosition" disabled>Анализ позиции Stockfish</button></div>
+<div id="analysisResult" class="notice hidden" aria-live="polite"></div>
+</div>
+<div class="card stack" style="margin-top:12px"><h3>Сохранённые партии</h3><div id="savedGames" class="muted">Пока нет сохранённых партий.</div></div>
+</section>
+
+<section class="page" id="reports">
+<h2>Отчёты</h2>
+<div class="grid">
+<div class="card"><div class="stat">Дней с отметками</div><div class="big" id="reportDays">0</div></div>
+<div class="card"><div class="stat">Задач выполнено</div><div class="big" id="reportTasks">0</div></div>
+<div class="card"><div class="stat">Выполнение задач</div><div class="big" id="reportPercent">0%</div></div>
+<div class="card"><div class="stat">Загружено партий</div><div class="big" id="reportGames">0</div></div>
+</div>
+<div class="card" style="margin-top:12px"><h3>Итог за 90 дней</h3><p class="muted" id="reportSummary">Начни отмечать задачи и сохранять партии — здесь появится сводка.</p><button id="exportReport">Скачать отчёт .txt</button></div>
+</section>
+
+<section class="page" id="settings">
+<h2>Настройки</h2>
+<div class="card stack">
+<label class="field">Chess.com username<input id="username" value="DIRMEN" autocapitalize="none"></label>
+<label class="field">Дата начала 90-дневного цикла<input id="startDate" type="date"></label>
+<label class="field">Целевой Rapid-рейтинг (необязательно)<input id="targetRating" type="number" min="100" max="4000" placeholder="Например, 1200"></label>
+<div class="actions"><button id="saveSettings">Сохранить настройки</button><button class="secondary" id="exportData">Экспорт данных JSON</button><label class="secondary" style="padding:10px 14px;border-radius:12px;cursor:pointer">Импорт JSON<input id="importData" type="file" accept=".json,application/json" hidden></label></div>
+<div class="notice">Данные задач и заметок хранятся в браузере на этом устройстве. Chess.com API показывает только публичные данные и работает в режиме чтения.</div>
+</div>
+<div class="footer">Chess Tracker 90 — независимый личный проект, не связан с Chess.com. Статистика может обновляться с задержкой со стороны Chess.com.</div>
+</section>
+<div class="footer">Подсказка: в Android открой сайт в Chrome → меню ⋮ → «Установить приложение» / «Добавить на главный экран».</div>
+</main>
+<script type="module">
+import { Chess } from 'https://cdn.jsdelivr.net/npm/chess.js@1.4.0/+esm';
+const $=id=>document.getElementById(id);
+const today=()=>new Date().toISOString().slice(0,10);
+const defaults=['Решить 10–15 тактических задач','Разобрать одну собственную партию','Потренировать эндшпиль 10 минут','Сыграть 1–2 вдумчивые партии','Записать одну ошибку и вывод'];
+const key='chessTracker90_v1';
+let data=JSON.parse(localStorage.getItem(key)||'null')||{username:'DIRMEN',startDate:today(),targetRating:'',ratings:[],tasks:{},games:[],pgns:[]};
+let chess=new Chess(), blindMoves=[], engine=null, engineReady=false, engineBusy=false, loadedPgn=null, installPrompt=null;
+function save(){localStorage.setItem(key,JSON.stringify(data));renderAll()}
+function dayNo(){let a=new Date(data.startDate+'T00:00:00'),b=new Date(today()+'T00:00:00');return Math.max(1,Math.min(90,Math.floor((b-a)/86400000)+1))}
+function dayTasks(){if(!data.tasks[today()])data.tasks[today()]=defaults.map((t,i)=>({id:i+1,text:t,done:false}));return data.tasks[today()]}
+function taskStats(){let all=Object.values(data.tasks).flat();return {done:all.filter(x=>x.done).length,total:all.length,days:Object.keys(data.tasks).filter(d=>data.tasks[d].some(t=>t.done)).length}}
+function renderAll(){let d=dayNo(),ts=taskStats(),todayTasks=dayTasks(),done=todayTasks.filter(x=>x.done).length;
+$('dayNotice').textContent=`День ${d} из 90. ${data.targetRating?`Цель Rapid: ${data.targetRating}. `:''}Двигайся в устойчивом темпе.`;
+$('dayCount').textContent=`День ${d} / 90`;$('daysLeft').textContent=`${90-d} дней осталось`;
+$('taskCount').textContent=`${done} / ${todayTasks.length}`;$('gameCount').textContent=data.games.length;
+let w=data.games.filter(g=>g.result==='win').length,dr=data.games.filter(g=>g.result==='draw').length,l=data.games.filter(g=>g.result==='loss').length;$('winRecord').textContent=`${w} побед · ${dr} ничьих · ${l} поражений`;
+$('taskDate').textContent=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});$('taskProgress').textContent=`${todayTasks.length?Math.round(done/todayTasks.length*100):0}%`;
+$('taskList').innerHTML='';todayTasks.forEach(t=>{let label=document.createElement('label');label.className='task'+(t.done?' done':'');let cb=document.createElement('input');cb.type='checkbox';cb.checked=t.done;cb.addEventListener('change',()=>{t.done=cb.checked;save()});let span=document.createElement('span');span.textContent=t.text;label.append(cb,span);$('taskList').append(label)});
+$('reportDays').textContent=ts.days;$('reportTasks').textContent=ts.done;$('reportPercent').textContent=ts.total?Math.round(ts.done/ts.total*100)+'%':'0%';$('reportGames').textContent=data.games.length;
+$('reportSummary').textContent=`Отмечено ${ts.days} активных дней, выполнено ${ts.done} из ${ts.total} задач (${ts.total?Math.round(ts.done/ts.total*100):0}%). Загружено партий: ${data.games.length}.`;
+$('savedGames').innerHTML=data.games.length?data.games.slice(-10).reverse().map(g=>`<div class="task"><span>${esc(g.date)} · ${esc(g.title||'Партия')} · ${esc(g.result||'результат не указан')}</span></div>`).join(''):'Пока нет сохранённых партий.';
+$('username').value=data.username;$('startDate').value=data.startDate;$('targetRating').value=data.targetRating||'';
+drawChart();updateRatingLabels();
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function drawChart(){let svg=$('ratingChart'),pts=data.ratings.slice(-90);if(!pts.length){svg.innerHTML='<text x="12" y="30" fill="#9eb0b8">Пока нет сохранённых точек рейтинга</text>';return}let vals=pts.map(p=>p.rating),min=Math.min(...vals)-15,max=Math.max(...vals)+15,range=Math.max(1,max-min);let coords=pts.map((p,i)=>`${20+i*560/Math.max(1,pts.length-1)},${145-(p.rating-min)/range*120}`).join(' ');svg.innerHTML=`<line x1="20" y1="145" x2="580" y2="145" stroke="#40525b"/><polyline points="${coords}" fill="none" stroke="#b5d7c2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`+pts.map((p,i)=>`<circle cx="${20+i*560/Math.max(1,pts.length-1)}" cy="${145-(p.rating-min)/range*120}" r="3" fill="#f2d28b"/>`).join('')+`<text x="20" y="164" fill="#9eb0b8" font-size="11">${esc(pts[0].date)}</text><text x="580" y="164" text-anchor="end" fill="#9eb0b8" font-size="11">${esc(pts.at(-1).date)}</text>`}
+function updateRatingLabels(){let r=data.ratings.at(-1);$('rapid').textContent=r?r.rating:'—';$('rapidRecord').textContent=r?`Последняя сохранённая точка · ${r.date}`:'Нажми «Обновить Chess.com»'}
+async function refreshStats(){let u=data.username.trim();if(!u)return;$('apiStatus').textContent='Загружаю публичную статистику…';try{let res=await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(u)}/stats`);if(!res.ok)throw Error(`HTTP ${res.status}`);let s=await res.json(),rapid=s.chess_rapid?.last?.rating;if(rapid){data.lastApiRating=rapid;data.lastApiAt=today();$('rapid').textContent=rapid;$('rapidRecord').textContent=`Chess.com API · ${today()}`;$('apiStatus').textContent=`Получен Rapid ${rapid}. Нажми «Сохранить текущий рейтинг», чтобы добавить точку на график.`}else{$('apiStatus').textContent='В публичной статистике нет Rapid-рейтинга для этого аккаунта.'}let b=s.chess_rapid?.record;if(b)$('rapidRecord').textContent=`Rapid · ${b.win||0} побед / ${b.draw||0} ничьих / ${b.loss||0} поражений`;}catch(e){$('apiStatus').textContent='Не удалось получить статистику. Проверь ник и интернет; можно сохранить рейтинг вручную.'}}
+$('refreshStats').addEventListener('click',refreshStats);$('saveRating').addEventListener('click',()=>{let n=Number(data.lastApiRating||prompt('Введи текущий Rapid-рейтинг:'));if(!Number.isFinite(n)||n<100||n>4000)return;data.ratings.push({date:today(),rating:n});data.ratings=data.ratings.slice(-90);save()});
+$('addTask').addEventListener('click',()=>{let v=$('newTask').value.trim();if(!v)return;dayTasks().push({id:Date.now(),text:v,done:false});$('newTask').value='';save()});
+$('resetTasks').addEventListener('click',()=>{if(confirm('Сбросить список задач на сегодня?')){data.tasks[today()]=defaults.map((t,i)=>({id:i+1,text:t,done:false}));save()}});
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===b.dataset.page))}));
+$('saveSettings').addEventListener('click',()=>{data.username=$('username').value.trim()||'DIRMEN';data.startDate=$('startDate').value||today();data.targetRating=$('targetRating').value;save();$('apiStatus').textContent='Настройки сохранены.'});
+function startEngine(){if(engine||engineBusy)return;engineBusy=true;$('engineState').textContent='Загружаю Stockfish…';try{engine=new Worker('https://cdn.jsdelivr.net/npm/stockfish@19.0.1/bin/stockfish-19-lite-single.js');engine.onmessage=e=>{let line=String(e.data);if(line==='uciok'){engineReady=true;engineBusy=false;engine.postMessage('isready')}if(line.startsWith('bestmove ')){engineBusy=false;handleBestMove(line.split(' ')[1])}if(line==='readyok')$('engineState').textContent='Stockfish готов'};engine.onerror=()=>{engineBusy=false;$('engineState').textContent='Не удалось загрузить движок'};engine.postMessage('uci')}catch(e){engineBusy=false;$('engineState').textContent='Ошибка загрузки движка'}}
+function newGame(){chess=new Chess();blindMoves=[];$('blindMoves').textContent='Партия началась.';$('blindMessage').textContent='Доска скрыта — представляй позицию мысленно.';$('blindMove').value='';$('boardReveal').classList.add('hidden');$('turnLabel').textContent='Твой ход: белые';}
+$('newBlind').addEventListener('click',()=>{newGame();$('blindColor').disabled=false});
+$('sendMove').addEventListener('click',()=>{if(engineBusy)return;let side=$('blindColor').value;if(chess.turn()!==side){$('blindMessage').textContent='Сейчас ход соперника — дождись ответа Stockfish.';return}let raw=$('blindMove').value.trim();if(!raw)return;let move;try{if(/^[a-h][1-8][a-h][1-8][qrbn]?$/i.test(raw))move=chess.move({from:raw.slice(0,2),to:raw.slice(2,4),promotion:raw[4]?.toLowerCase()});else move=chess.move(raw)}catch(e){}if(!move){$('blindMessage').textContent='Ход не распознан или нелегален. Попробуй SAN (Nf3) или UCI (g1f3).';return}blindMoves.push(`${blindMoves.length+1}. ${move.san}`);$('blindMove').value='';renderBlind();if(chess.isGameOver()){finishBlind();return}startEngine();let wait=()=>{if(!engineReady){setTimeout(wait,250);return}engineBusy=true;engine.postMessage(`position fen ${chess.fen()}`);engine.postMessage(`go depth ${$('engineDepth').value}`)};wait()});
+function handleBestMove(uci){if(!uci||uci==='(none)'){finishBlind();return}try{let m=chess.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||'q'});if(m)blindMoves.push(`${blindMoves.length+1}… ${m.san}`)}catch(e){}renderBlind();if(chess.isGameOver())finishBlind();else $('blindMessage').textContent='Твой ход. Запиши его нотацией.'}
+function renderBlind(){$('blindMoves').textContent=blindMoves.join('\n')||'Партия началась.';$('turnLabel').textContent=chess.turn()==='w'?'Ход белых':'Ход чёрных'}
+function finishBlind(){let res=chess.isCheckmate()?'Мат':chess.isDraw()?'Ничья':'Партия завершена';$('blindMessage').textContent=res}
+$('showFen').addEventListener('click',()=>{$('blindMessage').textContent='FEN: '+chess.fen()});
+$('revealBoard').addEventListener('click',()=>{let b=chess.board(),symbols={w:{k:'♔',q:'♕',r:'♖',b:'♗',n:'♘',p:'♙'},b:{k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'}};$('boardReveal').textContent=b.map(row=>row.map(p=>p?symbols[p.color][p.type]:'·').join(' ')).join('\n');$('boardReveal').classList.remove('hidden');setTimeout(()=>$('boardReveal').classList.add('hidden'),5000)});
+$('loadPgn').addEventListener('click',loadPgn);$('pgnFile').addEventListener('change',async e=>{$('pgnInput').value=await e.target.files[0]?.text()||'';loadPgn()});$('clearPgn').addEventListener('click',()=>{$('pgnInput').value='';loadedPgn=null;$('pgnMoves').classList.add('hidden');$('analysisResult').classList.add('hidden');$('analyzePosition').disabled=true;$('pgnStatus').textContent='Поле очищено.'});
+function loadPgn(){let p=$('pgnInput').value.trim();if(!p)return;let c=new Chess();try{c.loadPgn(p);loadedPgn=c;$('pgnStatus').textContent=`PGN загружен. Ходов: ${c.history().length}. Текущая позиция готова к анализу.`;$('pgnMoves').textContent=c.history().map((m,i)=>`${i%2===0?Math.floor(i/2)+1+'.':'...'} ${m}`).join(' ');$('pgnMoves').classList.remove('hidden');$('analyzePosition').disabled=false;data.games.push({date:today(),title:'Импортированная PGN-партия',result:'не указан',moves:c.history().length});save()}catch(e){$('pgnStatus').textContent='Не удалось прочитать PGN. Проверь формат записи.'}}
+$('analyzePosition').addEventListener('click',()=>{if(!loadedPgn)return;startEngine();let go=()=>{if(!engineReady){setTimeout(go,300);return}engineBusy=true;$('analysisResult').classList.remove('hidden');$('analysisResult').textContent='Stockfish анализирует финальную позицию…';engine.onmessage=e=>{let line=String(e.data);if(line.startsWith('info depth')){let m=line.match(/score (cp|mate) (-?\d+)/);if(m)$('analysisResult').textContent=`Глубина ${line.match(/depth (\d+)/)?.[1]||'?'} · оценка ${m[1]==='mate'?'мат в '+m[2]:(Number(m[2])/100).toFixed(2)}`;}if(line.startsWith('bestmove ')){engineBusy=false;let u=line.split(' ')[1],msg='';try{let tmp=new Chess(loadedPgn.fen());let mv=tmp.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]||'q'});msg=mv?`Лучший ход в текущей позиции: ${mv.san} (${u}).`:u}catch(e){msg=u}$('analysisResult').textContent+=' · '+msg;engine.onmessage=defaultEngineMessage}};engine.postMessage(`position fen ${loadedPgn.fen()}`);engine.postMessage('go depth 12')};go()});
+let defaultEngineMessage=null;
+$('exportReport').addEventListener('click',()=>{let s=taskStats(),txt=`CHESS TRACKER 90 — ОТЧЁТ\nПрофиль: ${data.username}\nЦикл: ${data.startDate} · день ${dayNo()} из 90\nАктивных дней: ${s.days}\nВыполнено задач: ${s.done}/${s.total}\nЗагружено партий: ${data.games.length}\nРейтинг: ${data.ratings.map(x=>x.date+': '+x.rating).join('\n')}`;download('chess-tracker-report.txt',txt,'text/plain')});
+$('exportData').addEventListener('click',()=>download('chess-tracker-data.json',JSON.stringify(data,null,2),'application/json'));
+$('importData').addEventListener('change',async e=>{try{data=JSON.parse(await e.target.files[0].text());save();alert('Данные импортированы')}catch(err){alert('Не удалось прочитать JSON-файл')}});
+function download(name,content,type){let a=document.createElement('a'),url=URL.createObjectURL(new Blob([content],{type}));a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
+defaultEngineMessage=e=>{let line=String(e.data);if(line.startsWith('bestmove ')){engineBusy=false;handleBestMove(line.split(' ')[1])}};
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('installBtn').hidden=false});
+$('installBtn').addEventListener('click',async()=>{if(installPrompt){installPrompt.prompt();installPrompt=null;$('installBtn').hidden=true}});
+renderAll();refreshStats();
+</script>
+</body>
+</html>
